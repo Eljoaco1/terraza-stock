@@ -1,6 +1,7 @@
 {
   "name": "bot-terraza",
   "version": "1.0.0",
+  "description": "Bot de stock para Telegram",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js"
