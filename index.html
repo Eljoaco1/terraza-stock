@@ -1,1 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Stock - Terraza</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
 
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      color: #ff9800;
+    }
+
+    .dashboard-summary {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    .card-summary {
+      flex: 1;
+      background: #1e1e1e;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid #333;
+    }
+
+    .card-summary span {
+      display: block;
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+
+    .card-summary.danger span { color: #f44336; }
+    .card-summary.ok span { color: #4caf50; }
+
+    .container {
+      width: 100%;
+      max-width: 680px;
+      background: #1e1e1e;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .top-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .search-box {
+      flex: 1;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background-color: #2a2a2a;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .search-box:focus {
+      border-color: #ff9800;
+    }
+
+    .btn-danger-all {
+      background-color: #2a1a1a;
+      color: #f44336;
+      border: 1px solid #f44336;
+      border-radius: 6px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .btn-danger-all:hover {
+      background-color: #f44336;
+      color: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+      vertical-align: middle;
+    }
+
+    th {
+      color: #ff9800;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+    }
+
+    .categoria-header {
+      background-color: #2a2a2a;
+      color: #ff9800;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+    }
+
+    .cantidad {
+      font-weight: bold;
+      color: #4caf50;
+      text-align: right;
+    }
+
+    .cantidad.cero {
+      color: #f44336;
+    }
+
+    .actions-cell {
+      display: flex;
+      justify-content: flex-end;
+      gap: 5px;
+    }
+
+    .btn-action {
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .btn-action:hover {
+      background-color: #ff9800;
+      color: #000;
+      border-color: #ff9800;
+    }
+
+    .btn-action.reset {
+      color: #f44336;
+      border-color: #f44336;
+      width: auto;
+      padding: 0 6px;
+      font-size: 0.75rem;
+    }
+
+    .btn-action.reset:hover {
+      background-color: #f44336;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Stock Terraza</h1>
+
+  <div class="dashboard-summary">
+    <div class="card-summary ok">
+      <small>Con Stock</small>
+      <span id="count-ok">0</span>
+    </div>
+    <div class="card-summary danger">
+      <small>Agotados (0)</small>
+      <span id="count-zero">0</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="top-controls">
+      <input type="text" id="buscador" class="search-box" placeholder="🔍 Buscar producto..." oninput="renderizarStock()">
+      <button class="btn-danger-all" onclick="resetearTodoElStock()"> Reset Cero General</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th style="text-align: right;">Cantidad</th>
+          <th style="text-align: right; width: 150px;">Ajustar</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-stock">
+        <tr>
+          <td colspan="3" style="text-align: center; color: #888;">Cargando datos...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      databaseURL: "https://datos-terraza-default-rtdb.firebaseio.com"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const stockRef = db.ref('stock');
+
+    const productosCategorizados = {
+      "Sin Alcohol": [
+        "ipa sin", "coca lata", "coca 500ml", "coca grande", "speed 250", "speed xl", 
+        "agua 500ml", "agua 2l", "soda 500ml", "soda 2l", "fanta", "coca zero", 
+        "sprite 500ml", "sprite 2,25ml", "schweppes", "paso de los toros", "jugo naranja", "papas"
+      ],
+      "Con Alcohol": [
+        "fernet", "gancia", "campari", "smirnoff", "gin london", "gin doble", "gin mango", 
+        "gin pink", "bib london", "bib doble", "bib mango", "bib pink", "corona", 
+        "corona sin", "stella", "heineken", "vino la flota", "vino blanco", "vermu pasaron cosas", "vermu carpano"
+      ]
+    };
+
+    const tablaStock = document.getElementById('tabla-stock');
+    const buscador = document.getElementById('buscador');
+    let datosFirebaseActuales = {};
+
+    function formatearStock(valor) {
+      if (typeof valor !== 'number' || valor <= 0) return '0';
+      
+      const entero = Math.floor(valor);
+      const decimal = Math.round((valor - entero) * 100) / 100;
+
+      let fraccion = '';
+      if (decimal === 0.25) fraccion = '1/4';
+      else if (decimal === 0.5) fraccion = '1/2';
+      else if (decimal === 0.75) fraccion = '3/4';
+      else if (decimal > 0) fraccion = decimal.toString();
+
+      if (entero === 0 && fraccion !== '') return fraccion;
+      if (fraccion !== '') return `${entero} y ${fraccion}`;
+      return `${entero}`;
+    }
+
+    // Modificar cantidad directamente (+1, -1, o custom)
+    function modificarStock(producto, delta) {
+      const actual = datosFirebaseActuales[producto] || 0;
+      const nuevo = Math.max(0, Math.round((actual + delta) * 100) / 100);
+      stockRef.child(producto).set(nuevo);
+    }
+
+    function ingresarManual(producto) {
+      const valor = prompt(`Ingresa la nueva cantidad total para "${producto}" (ej: 5, 2.5, 0.25):`);
+      if (valor !== null && valor.trim() !== "") {
+        const num = parseFloat(valor.replace(',', '.'));
+        if (!isNaN(num) && num >= 0) {
+          stockRef.child(producto).set(num);
+        } else {
+          alert("Ingresa un número válido.");
+        }
+      }
+    }
+
+    function resetearProducto(producto) {
+      if (confirm(`¿Poner stock de "${producto}" en 0?`)) {
+        stockRef.child(producto).set(0);
+      }
+    }
+
+    function resetearTodoElStock() {
+      if (confirm("⚠️ ¿Poner TODO el stock del bar en 0? Esta acción no se puede deshacer.")) {
+        const resetObj = {};
+        for (const prods of Object.values(productosCategorizados)) {
+          prods.forEach(p => resetObj[p] = 0);
+        }
+        stockRef.set(resetObj);
+      }
+    }
+
+    function renderizarStock() {
+      const filtro = buscador.value.toLowerCase().trim();
+      tablaStock.innerHTML = '';
+
+      let hayResultados = false;
+      let okCount = 0;
+      let zeroCount = 0;
+
+      for (const [categoria, productos] of Object.entries(productosCategorizados)) {
+        const productosFiltrados = productos.filter(p => p.toLowerCase().includes(filtro));
+
+        if (productosFiltrados.length > 0) {
+          hayResultados = true;
+
+          const trCat = document.createElement('tr');
+          trCat.innerHTML = `<td colspan="3" class="categoria-header">${categoria}</td>`;
+          tablaStock.appendChild(trCat);
+
+          productosFiltrados.forEach((producto) => {
+            const cantidadNum = datosFirebaseActuales[producto] !== undefined ? datosFirebaseActuales[producto] : 0;
+            const cantidadTexto = formatearStock(cantidadNum);
+            
+            if (cantidadNum > 0) okCount++;
+            else zeroCount++;
+
+            const tr = document.createElement('tr');
+            const cantidadClase = cantidadNum <= 0 ? 'cantidad cero' : 'cantidad';
+
+            tr.innerHTML = `
+              <td style="text-transform: capitalize;">${producto}</td>
+              <td class="${cantidadClase}">${cantidadTexto}</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn-action" onclick="modificarStock('${producto}', -1)">-</button>
+                  <button class="btn-action" onclick="modificarStock('${producto}', 1)">+</button>
+                  <button class="btn-action" onclick="ingresarManual('${producto}')">✏️</button>
+                  <button class="btn-action reset" onclick="resetearProducto('${producto}')">0</button>
+                </div>
+              </td>
+            `;
+            tablaStock.appendChild(tr);
+          });
+        }
+      }
+
+      document.getElementById('count-ok').innerText = okCount;
+      document.getElementById('count-zero').innerText = zeroCount;
+
+      if (!hayResultados) {
+        tablaStock.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">No se encontraron productos</td></tr>';
+      }
+    }
+
+    stockRef.on('value', (snapshot) => {
+      datosFirebaseActuales = snapshot.val() || {};
+      renderizarStock();
+    });
+  </script>
+
+</body>
+</html>
