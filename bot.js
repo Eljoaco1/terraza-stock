@@ -1,4 +1,6 @@
-// 1. Configuración de Firebase Realtime Database (API REST)
+const http = require('http');
+
+// 1. Configuración de Firebase Realtime Database
 const FIREBASE_URL = "https://datos-terraza-default-rtdb.firebaseio.com";
 
 const productosValidos = [
@@ -10,11 +12,20 @@ const productosValidos = [
   "corona sin", "stella", "heineken", "vino la flota", "vino blanco", "vermu pasaron cosas", "vermu carpano"
 ];
 
-// 2. Token de Telegram y enlace a la API
+// 2. Token de Telegram y API
 const TELEGRAM_TOKEN = '8916813555:AAEdYKNgsGxtPBOh5gmfZnAi7sArFQPTHqE';
 const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
 
 let lastUpdateId = 0;
+
+// Servidor HTTP simple para cumplir con los requerimientos de Koyeb/Render
+const PORT = process.env.PORT || 8080;
+http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+  res.end('🤖 Bot Stock Terraza Activo 24/7');
+}).listen(PORT, () => {
+  console.log(`🌐 Servidor de monitoreo corriendo en el puerto ${PORT}`);
+});
 
 // Convierte texto de cantidad (ej: "1/4", "0.5", "2") a número float
 function parseCantidad(str) {
@@ -62,7 +73,6 @@ async function sumarStockFirebase(producto, cantidad) {
   const currentStock = await resGet.json();
   
   const stockPrevio = typeof currentStock === 'number' ? currentStock : 0;
-  // Redondear a 2 decimales para evitar imprecisiones de JavaScript
   const nuevoStock = Math.round((stockPrevio + cantidad) * 100) / 100;
 
   await fetch(url, {
@@ -76,15 +86,13 @@ async function sumarStockFirebase(producto, cantidad) {
 
 async function getUpdates() {
   try {
-    const response = await fetch(`${TELEGRAM_API}/getUpdates?offset=${lastUpdateId + 1}&timeout=10`);
+    const response = await fetch(`${TELEGRAM_API}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`);
     const data = await response.json();
 
     if (data.ok && data.result.length > 0) {
-      console.log(`📩 Se recibieron ${data.result.length} actualización(es) de Telegram`);
       for (const update of data.result) {
         lastUpdateId = update.update_id;
         if (update.message) {
-          console.log(`💬 Mensaje de ${update.message.from.first_name}: "${update.message.text}"`);
           await processMessage(update.message);
         }
       }
@@ -102,10 +110,9 @@ async function processMessage(msg) {
   const usuario = msg.from.first_name || 'Compañero';
 
   if (texto === '/start' || texto === '/ayuda') {
-    return sendMessage(chatId, `👋 ¡Hola ${usuario}!\n\nPuedes enviar enteros, decimales o fracciones.\nEjemplos:\n• fernet 1/4\n• fernet 1/2\n• coca lata 5`);
+    return sendMessage(chatId, `👋 ¡Hola ${usuario}!\n\nPuedes enviar enteros, decimales o fracciones.\nEjemplos:\n• fernet 1/4\n• fernet 0.5\n• coca lata 5`);
   }
 
-  // Acepta enteros, decimales (0.5) y fracciones (1/4, 3/4)
   const coincidencia = texto.match(/^(.*?)\s+(\d+(?:[\.,]\d+|\/\d+)?)$/);
 
   if (!coincidencia) {
@@ -136,5 +143,5 @@ async function processMessage(msg) {
   }
 }
 
-console.log("🤖 Bot de Telegram corriendo con soporte para fracciones y decimales...");
+console.log("🤖 Bot de Telegram corriendo...");
 getUpdates();
