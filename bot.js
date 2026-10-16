@@ -142,6 +142,18 @@ async function processMessage(msg) {
     await sendMessage(chatId, `❌ Hubo un error al actualizar el stock.`);
   }
 }
+console.log(`%c
+     +--^----------,--------,-----,--------^-,
+
+     | |||||||||   | |||||    | _,-----------,|
+     \`+------------------------|  /    )===|~|--^
+       \`\\_,--------,-----------^\\_/   /     \`~|--^
+
+         |________-|           _,'   /
+         \`---------|________,'     /
+                    \`----------    /
+                               \\__/_/
+`, "color: #00FF00; font-family: monospace; font-weight: bold; background-color: #111; padding: 10px;");
 
 console.log("🤖 Bot de Telegram corriendo...");
 getUpdates();
