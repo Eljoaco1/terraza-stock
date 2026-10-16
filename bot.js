@@ -143,14 +143,12 @@ async function processMessage(msg) {
   }
 }
 console.log(`%c
-           ____/\\__________                   
-  ________/   [___________]----------------------------------------,
- [       ______    __   ________________________________________  /
-  \\_____/      \\__/  \\_/   \\_______/   \\_______/     \\_________/ /
-              /   /                                   \\_________/
-             /   /
-            /___/
-`, "color: #4A5D4E; font-family: monospace; font-weight: bold; font-size: 12px;");
+      ^__^
+     (oo  )\\_______
+     (___)\\       )\\/\\
+         ||----w |
+         ||     ||
+`, "color: #ff94c2; font-family: monospace; font-size: 16px; font-weight: bold; line-height: 1.2;");
 
 console.log("🤖 Bot de Telegram corriendo...");
 getUpdates();
