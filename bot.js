@@ -9,7 +9,7 @@ const productosValidos = [
   "sprite 500ml", "sprite 2,25ml", "schweppes", "paso de los toros", "cepita", "papas",
   "fernet", "gancia", "campari", "smirnoff", "gin london", "gin doble", "gin mango", "bib vermut",
   "gin pink", "bib london", "bib doble", "bib mango", "bib pink", "corona", "mani", "ipa sin peñon", "miller",
-  "corona sin", "stella", "heineken", "vino la flota", "vino blanco", "vermu pasaron cosas", "vermu carpano"
+  "corona sin", "stella", "heineken", "vino la flota", "vino blanco", "vermu pasaron cosas", "vermu carpano","adamajuana"
 ];
 
 // 2. Token de Telegram y API
