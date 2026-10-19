@@ -4,11 +4,11 @@ const http = require('http');
 const FIREBASE_URL = "https://datos-terraza-default-rtdb.firebaseio.com";
 
 const productosValidos = [
-  "ipa sin", "coca lata", "coca 500ml", "coca grande", "speed 250", "speed xl", 
-  "agua 500ml", "agua 2l", "soda 500ml", "soda 2l", "fanta", "coca zero", 
-  "sprite 500ml", "sprite 2,25ml", "schweppes", "paso de los toros", "jugo naranja", "papas",
-  "fernet", "gancia", "campari", "smirnoff", "gin london", "gin doble", "gin mango", 
-  "gin pink", "bib london", "bib doble", "bib mango", "bib pink", "corona", 
+  "ipa sin antares", "coca lata", "coca 500ml", "coca grande", "speed 250", "speed xl", 
+  "agua 500ml", "agua 2l", "soda 500ml", "soda 2l", "fanta", "coca zero", "saborizada naranja", "saborizada pomelo",
+  "sprite 500ml", "sprite 2,25ml", "schweppes", "paso de los toros", "cepita", "papas",
+  "fernet", "gancia", "campari", "smirnoff", "gin london", "gin doble", "gin mango", "bib vermut",
+  "gin pink", "bib london", "bib doble", "bib mango", "bib pink", "corona", "mani", "ipa sin peñon", "miller",
   "corona sin", "stella", "heineken", "vino la flota", "vino blanco", "vermu pasaron cosas", "vermu carpano"
 ];
 
