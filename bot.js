@@ -4,7 +4,7 @@ const http = require('http');
 const FIREBASE_URL = "https://datos-terraza-default-rtdb.firebaseio.com";
 
 const productosValidos = [
-  "ipa sin antares", "coca lata", "coca 500ml", "coca grande", "speed", "speed xl", 
+  "ipa sin antares", "coca lata", "coca 500ml", "coca grande", "speed", "speed xl", "cunnignton",
   "agua 500ml", "agua 2l", "soda 500ml", "soda 2l", "fanta", "coca zero", "saborizada naranja", "saborizada pomelo",
   "sprite 500ml", "sprite 2,25ml", "schweppes", "paso de los toros", "cepita", "papas",
   "fernet", "gancia", "campari", "smirnoff", "gin london", "gin doble", "gin mango", "bib vermut",
