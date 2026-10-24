@@ -143,7 +143,7 @@ async function processMessage(msg) {
   }
 }
 console.log("🤖 Bot de Telegram corriendo...");
-for(String i : productosValidos){
+for (const i of productosValidos) {
   console.log(i);
-  }
+}
 getUpdates();
