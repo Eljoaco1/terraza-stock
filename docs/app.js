@@ -149,6 +149,7 @@
     $('count-ok').textContent = ok;
     $('count-zero').textContent = cero;
     $('admin').hidden = !esDueno();
+        if (esDueno()) renderZonasAdmin();
   }
   $('buscador').oninput = render;
 
@@ -208,6 +209,23 @@
     if (zonas.map(norm).includes(norm(n))) return alert('Esa zona ya existe.');
     db.ref('config/zonas').set([...zonas, n]).then(() => { $('n-zona').value = ''; }).catch(x => alert(x.message));
   };
+  
+  function renderZonasAdmin() {
+    $('lista-zonas').replaceChildren(...zonas.map(z => {
+      const hayStock = Object.values(zdata[z] || {}).some(v => v > 0);
+      return h('div', { className: 'usr' },
+        h('span', { textContent: z + (hayStock ? ' (con stock)' : '') }),
+        h('button', { className: 'peligro', textContent: 'Eliminar', onclick: () => eliminarZona(z, hayStock) }));
+    }));
+  }
+
+  async function eliminarZona(z, hayStock) {
+    if (hayStock) return alert(`"${z}" todavía tiene stock. Un empleado tiene que dejarla en 0 antes de poder eliminarla.`);
+    if (zonas.length <= 1) return alert('Tiene que quedar al menos una zona.');
+    if (!confirm(`¿Eliminar la zona "${z}"?`)) return;
+    try { await db.ref('config/zonas').set(zonas.filter(x => x !== z)); }
+    catch (x) { alert('No se pudo eliminar: ' + x.message); }
+  }
 
   $('f-prod').onsubmit = e => {
     e.preventDefault();
