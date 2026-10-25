@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stock Terraza</title>
+  <title>Stock</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <h1>Stock Terraza</h1>
+    <h1 id="titulo">Stock</h1>
     <div class="menu" id="menu" hidden>
       <button id="menu-btn" class="icono" aria-label="Menú" aria-haspopup="true" aria-expanded="false">⋮</button>
       <div id="menu-lista" class="menu-lista" hidden>
@@ -21,12 +21,32 @@
 
   <main>
     <section id="login" class="caja centro">
-      <p>Entrá con tu cuenta de Google para ver y modificar el stock.</p>
+      <p>Entrá con tu cuenta de Google para ver y modificar el stock de tu bar.</p>
       <button id="entrar" class="primario">Entrar con Google</button>
     </section>
 
+    <section id="elegir" class="caja" hidden>
+      <h2>¿Cómo querés entrar?</h2>
+      <div class="dos">
+        <form id="f-crear" class="opcion">
+          <h3>Soy dueño</h3>
+          <p>Creá tu bar con un nombre único. Si ya creaste el tuyo, entrá con la misma cuenta de Google y vas directo.</p>
+          <input id="n-bar" placeholder="Nombre del bar" maxlength="40" required>
+          <button class="primario">Crear mi bar</button>
+        </form>
+        <form id="f-unir" class="opcion">
+          <h3>Soy empleado</h3>
+          <p>Escribí el nombre del bar donde trabajás y el dueño recibe tu solicitud.</p>
+          <input id="u-bar" placeholder="Nombre del bar" maxlength="40" required>
+          <button class="primario">Enviar solicitud</button>
+        </form>
+      </div>
+      <p id="e-msg" class="aviso" role="alert"></p>
+    </section>
+
     <section id="pendiente" class="caja centro" hidden>
-      <p>Tu cuenta está esperando aprobación. Avisale al dueño para que te dé acceso.</p>
+      <p>Tu solicitud para entrar a <strong id="p-bar"></strong> está esperando que el dueño la apruebe.</p>
+      <button id="cancelar" class="link">Cancelar solicitud</button>
     </section>
 
     <section id="app" hidden>
@@ -38,27 +58,28 @@
       <div class="caja">
         <div id="tabs" class="tabs"></div>
         <input id="buscador" type="search" placeholder="Buscar producto">
-        <p id="aviso" class="aviso" hidden>Esta vista es el total. Para cargar o descontar, elegí una zona.</p>
+        <p id="aviso" class="aviso" hidden></p>
         <table><tbody id="tabla"></tbody></table>
       </div>
 
       <details id="admin" class="caja" hidden>
         <summary>Herramientas del dueño</summary>
-        <h2>Usuarios</h2>
+        <h2>Usuarios y solicitudes</h2>
         <div id="usuarios"></div>
         <h2>Zonas</h2>
         <form id="f-zona" class="fila"><input id="n-zona" placeholder="Nueva zona (ej: salón)" required><button class="primario">Agregar zona</button></form>
-                <div id="lista-zonas"></div>
+        <div id="lista-zonas"></div>
         <h2>Productos</h2>
         <form id="f-prod" class="fila">
           <input id="n-prod" placeholder="Nombre del producto" required>
-          <select id="n-cat"><option>Sin Alcohol</option><option>Con Alcohol</option><option>comida</option></select>
+          <select id="n-cat"><option>Sin Alcohol</option><option>Con Alcohol</option></select>
           <button class="primario">Agregar producto</button>
         </form>
         <h2>Accesos retirados</h2>
         <div id="bloqueados"></div>
       </details>
     </section>
+
     <section id="historial" class="caja" hidden>
       <div class="fila cab"><h2>Historial de movimientos</h2><button id="h-volver" class="link">Volver al stock</button></div>
       <div id="h-lista"></div>
@@ -69,6 +90,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script src="config.js"></script>
+  <script src="productos.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
