@@ -103,10 +103,11 @@
     if (aplicado !== 0) await db.ref('movimientos').push({ usuario: yo.email, producto: p, zona: zona || null, delta: aplicado, ts: firebase.database.ServerValue.TIMESTAMP, origen: 'panel' });
   }
 
-  async function cambiar(p, delta) {
-    if (zonaSel === 'general' || !esEmpleado()) return;
-    try { await mover(p, zonaSel === 'general' ? null : zonaSel, delta); }
-    catch (e) { alert('No se pudo guardar: ' + e.message); }
+    async function cambiar(p, delta) {
+    if (zonaSel === 'general') return alert('En General no se puede modificar. Elegí una zona.');
+    if (!esEmpleado()) return alert('Tu cuenta no es de empleado, por eso no podés modificar el stock.');
+    try { await mover(p, zonaSel, delta); }
+    catch (e) { console.error(e); alert('No se pudo guardar: ' + e.message); }
   }
 
   const cantidad = p => zonaSel === 'general' ? (stock[p] || 0) : ((zdata[zonaSel] || {})[p] || 0);
