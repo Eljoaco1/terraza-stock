@@ -123,8 +123,9 @@ async function procesar(msg) {
   if (!p) return send(chat, `⚠️ No entendí, ${nombre}. Probá "fernet 2" o "restar fernet 1/2".\n\n${AYUDA}`);
   const r = buscar(p.producto, productos);
   if (!r.ok) return send(chat, r.opciones.length ? `¿A cuál te referís? ${r.opciones.join(', ')}` : `❌ No encontré "${p.producto}".`);
-  const zona = p.zona || (await db.ref(`telegram/${uid}/zona`).once('value')).val() || null;
-
+    const zdef = (await db.ref(`telegram/${uid}/zona`).once('value')).val();
+  const zona = p.zona || (zonas.includes(zdef) ? zdef : null);
+  
   try {
     const m = await mover(r.ok, zona, p.delta, nombre);
     const signo = m.aplicado >= 0 ? '+' : '−';
