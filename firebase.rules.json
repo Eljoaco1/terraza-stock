@@ -1,0 +1,52 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "usuarios": {
+      ".read": "auth != null && root.child('usuarios/'+auth.uid+'/rol').val() === 'dueno'",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && (root.child('usuarios/'+auth.uid+'/rol').val() === 'dueno' || (auth.uid === $uid && !data.exists() && !root.child('bloqueados/'+auth.uid).exists() && (newData.child('rol').val() === 'pendiente' || (!root.child('usuarios').exists() && newData.child('rol').val() === 'dueno'))))",
+        ".validate": "newData.hasChildren(['email','rol']) && newData.child('rol').val().matches(/^(pendiente|empleado|dueno)$/)"
+      }
+    },
+    "productos": {
+      ".read": "auth != null && (root.child('usuarios/'+auth.uid+'/rol').val() === 'dueno' || root.child('usuarios/'+auth.uid+'/rol').val() === 'empleado')",
+      ".write": "auth != null && root.child('usuarios/'+auth.uid+'/rol').val() === 'dueno'"
+    },
+    "config": {
+      ".read": "auth != null && (root.child('usuarios/'+auth.uid+'/rol').val() === 'dueno' || root.child('usuarios/'+auth.uid+'/rol').val() === 'empleado')",
+      ".write": "auth != null && root.child('usuarios/'+auth.uid+'/rol').val() === 'dueno'"
+    },
+    "stock": {
+      ".read": "auth != null && (root.child('usuarios/'+auth.uid+'/rol').val() === 'dueno' || root.child('usuarios/'+auth.uid+'/rol').val() === 'empleado')",
+      "$p": {
+        ".write": "auth != null && root.child('usuarios/'+auth.uid+'/rol').val() === 'empleado'",
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      }
+    },
+    "zonas": {
+      ".read": "auth != null && (root.child('usuarios/'+auth.uid+'/rol').val() === 'dueno' || root.child('usuarios/'+auth.uid+'/rol').val() === 'empleado')",
+      "$z": {
+        "$p": {
+          ".write": "auth != null && root.child('usuarios/'+auth.uid+'/rol').val() === 'empleado'",
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        }
+      }
+    },
+    "movimientos": {
+      ".read": "auth != null && root.child('usuarios/'+auth.uid+'/rol').val() === 'dueno'",
+      "$id": {
+        ".write": "auth != null && root.child('usuarios/'+auth.uid+'/rol').val() === 'empleado' && !data.exists()",
+        ".validate": "newData.hasChildren(['usuario','producto','delta','ts'])"
+      },
+      ".indexOn": [
+        "ts"
+      ]
+    },
+    "bloqueados": {
+      ".read": "auth != null && root.child('usuarios/'+auth.uid+'/rol').val() === 'dueno'",
+      ".write": "auth != null && root.child('usuarios/'+auth.uid+'/rol').val() === 'dueno'"
+    }
+  }
+}

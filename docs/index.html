@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Terraza</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Stock Terraza</h1>
+    <div class="menu" id="menu" hidden>
+      <button id="menu-btn" class="icono" aria-label="Menú" aria-haspopup="true" aria-expanded="false">⋮</button>
+      <div id="menu-lista" class="menu-lista" hidden>
+        <div class="cuenta"><strong id="m-nombre"></strong><span id="m-email"></span><span id="m-rol"></span></div>
+        <button id="m-hist" hidden>Historial de movimientos</button>
+        <button id="m-salir">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="login" class="caja centro">
+      <p>Entrá con tu cuenta de Google para ver y modificar el stock.</p>
+      <button id="entrar" class="primario">Entrar con Google</button>
+    </section>
+
+    <section id="pendiente" class="caja centro" hidden>
+      <p>Tu cuenta está esperando aprobación. Avisale al dueño para que te dé acceso.</p>
+    </section>
+
+    <section id="app" hidden>
+      <div class="resumen">
+        <div class="ok"><small>Con stock</small><strong id="count-ok">0</strong></div>
+        <div class="cero"><small>Agotados</small><strong id="count-zero">0</strong></div>
+      </div>
+
+      <div class="caja">
+        <div id="tabs" class="tabs"></div>
+        <input id="buscador" type="search" placeholder="Buscar producto">
+        <p id="aviso" class="aviso" hidden>Esta vista es el total. Para cargar o descontar, elegí una zona.</p>
+        <table><tbody id="tabla"></tbody></table>
+      </div>
+
+      <details id="admin" class="caja" hidden>
+        <summary>Herramientas del dueño</summary>
+        <h2>Usuarios</h2>
+        <div id="usuarios"></div>
+        <h2>Zonas</h2>
+        <form id="f-zona" class="fila"><input id="n-zona" placeholder="Nueva zona (ej: salón)" required><button class="primario">Agregar zona</button></form>
+        <h2>Productos</h2>
+        <form id="f-prod" class="fila">
+          <input id="n-prod" placeholder="Nombre del producto" required>
+          <select id="n-cat"><option>Sin Alcohol</option><option>Con Alcohol</option></select>
+          <button class="primario">Agregar producto</button>
+        </form>
+        <h2>Accesos retirados</h2>
+        <div id="bloqueados"></div>
+      </details>
+    </section>
+    <section id="historial" class="caja" hidden>
+      <div class="fila cab"><h2>Historial de movimientos</h2><button id="h-volver" class="link">Volver al stock</button></div>
+      <div id="h-lista"></div>
+    </section>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

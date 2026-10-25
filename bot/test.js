@@ -1,0 +1,18 @@
+const assert = require('assert');
+const { parse, buscar, fmt } = require('./parser');
+const Z = ['barra', 'arriba'];
+const P = ['fernet', 'coca lata', 'coca 500ml', 'speed', 'speed xl', 'cunnignton', 'sprite 2,25ml'];
+assert.deepStrictEqual(parse('fernet 1/4', Z), { producto: 'fernet', delta: 0.25, zona: null });
+assert.deepStrictEqual(parse('Restar coca lata 2', Z), { producto: 'coca lata', delta: -2, zona: null });
+assert.deepStrictEqual(parse('fernet -1/2 barra', Z), { producto: 'fernet', delta: -0.5, zona: 'barra' });
+assert.deepStrictEqual(parse('arriba: fernet 3', Z), { producto: 'fernet', delta: 3, zona: 'arriba' });
+assert.deepStrictEqual(parse('vendí speed xl 1,5', Z), { producto: 'speed xl', delta: -1.5, zona: null });
+assert.deepStrictEqual(parse('sprite 2,25ml 3', Z), { producto: 'sprite 2,25ml', delta: 3, zona: null });
+assert.strictEqual(parse('hola', Z), null);
+assert.strictEqual(parse('fernet 0', Z), null);
+assert.strictEqual(buscar('Fernet', P).ok, 'fernet');
+assert.strictEqual(buscar('coca', P).opciones.length, 2);
+assert.strictEqual(buscar('cunington', P).ok, 'cunnignton');
+assert.strictEqual(fmt(20.75), '20 y 3/4');
+assert.strictEqual(fmt(0.5), '1/2');
+console.log('OK: todos los tests pasaron');
