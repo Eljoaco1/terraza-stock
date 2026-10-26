@@ -2,35 +2,30 @@
 const http = require('http');
 const admin = require('firebase-admin');
 const { norm, r2, parse, buscar, fmt } = require('./parser');
-const seed = require('./productos.json');
 
-const { TELEGRAM_TOKEN, FIREBASE_DB_URL, FIREBASE_SERVICE_ACCOUNT, WEBHOOK_SECRET } = process.env;
+const { TELEGRAM_TOKEN, FIREBASE_DB_URL, FIREBASE_SERVICE_ACCOUNT, WEBHOOK_SECRET, NEGOCIO } = process.env;
 const PORT = process.env.PORT || 8080;
 const PUBLIC_URL = process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL; // Render lo define solo
 const ALLOWED = (process.env.ALLOWED_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
 const OBSERVERS = (process.env.OBSERVER_IDS || '').split(',').map(s => s.trim()).filter(Boolean); // dueños: solo lectura
 
-for (const [k, v] of Object.entries({ TELEGRAM_TOKEN, FIREBASE_DB_URL, FIREBASE_SERVICE_ACCOUNT, WEBHOOK_SECRET })) {
+for (const [k, v] of Object.entries({ TELEGRAM_TOKEN, FIREBASE_DB_URL, FIREBASE_SERVICE_ACCOUNT, WEBHOOK_SECRET, NEGOCIO })) {
   if (!v) { console.error(`Falta la variable de entorno ${k}`); process.exit(1); }
 }
 if (!ALLOWED.length) console.warn('⚠️ ALLOWED_IDS vacío: cualquiera que encuentre el bot puede modificar el stock.');
 
 admin.initializeApp({ credential: admin.credential.cert(JSON.parse(FIREBASE_SERVICE_ACCOUNT)), databaseURL: FIREBASE_DB_URL });
 const db = admin.database();
+const R = p => `negocios/${NEGOCIO}/${p}`; // todo cuelga del bar configurado en NEGOCIO
 const API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
 
 // Productos y zonas en vivo desde Firebase (única fuente de verdad)
 let productos = [], zonas = ['barra', 'arriba'];
-db.ref('productos').on('value', s => { productos = Object.keys(s.val() || {}); });
-db.ref('config/zonas').on('value', s => { const v = s.val(); if (Array.isArray(v) && v.length) zonas = v; });
-
-async function sembrar() {
-  if ((await db.ref('productos').once('value')).exists()) return;
-  const o = {};
-  for (const [cat, lista] of Object.entries(seed)) lista.forEach(n => { o[n] = { categoria: cat }; });
-  await db.ref('productos').set(o);
-  await db.ref('config/zonas').set(zonas);
-}
+db.ref(R('productos')).on('value', s => {
+  productos = Object.keys(s.val() || {});
+  console.log(`Negocio "${NEGOCIO}": ${productos.length} productos cargados`);
+}, e => console.error('No se pueden leer los productos:', e.message));
+db.ref(R('config/zonas')).on('value', s => { const v = s.val(); if (Array.isArray(v) && v.length) zonas = v; });
 
 async function send(chatId, text) {
   for (let i = 0; i < text.length; i += 3800) {
@@ -51,15 +46,15 @@ async function ajustar(ref, delta) {
 async function mover(prod, zona, delta, quien) {
   let aplicado, zonaDespues = null;
   if (zona) {
-    const z = await ajustar(db.ref(`zonas/${zona}/${prod}`), delta);
+    const z = await ajustar(db.ref(R(`zonas/${zona}/${prod}`)), delta);
     aplicado = r2(z.despues - z.antes); zonaDespues = z.despues;
-    if (aplicado !== 0) await ajustar(db.ref(`stock/${prod}`), aplicado);
+    if (aplicado !== 0) await ajustar(db.ref(R(`stock/${prod}`)), aplicado);
   } else {
-    const s = await ajustar(db.ref(`stock/${prod}`), delta);
+    const s = await ajustar(db.ref(R(`stock/${prod}`)), delta);
     aplicado = r2(s.despues - s.antes);
   }
-  const total = (await db.ref(`stock/${prod}`).once('value')).val() || 0;
-  if (aplicado !== 0) await db.ref('movimientos').push({ usuario: quien, producto: prod, zona: zona || null, delta: aplicado, ts: admin.database.ServerValue.TIMESTAMP, origen: 'telegram' });
+  const total = (await db.ref(R(`stock/${prod}`)).once('value')).val() || 0;
+  if (aplicado !== 0) await db.ref(R('movimientos')).push({ usuario: quien, producto: prod, zona: zona || null, delta: aplicado, ts: admin.database.ServerValue.TIMESTAMP, origen: 'telegram' });
   return { aplicado, zonaDespues, total };
 }
 
@@ -85,35 +80,35 @@ async function procesar(msg) {
 
   if (t.startsWith('/zona')) {
     const arg = t.slice(5).trim();
-    if (arg === 'ninguna') { await db.ref(`telegram/${uid}/zona`).remove(); return send(chat, 'Zona por defecto quitada: se suma solo al total.'); }
+    if (arg === 'ninguna') { await db.ref(R(`telegram/${uid}/zona`)).remove(); return send(chat, 'Zona por defecto quitada: se suma solo al total.'); }
     const z = zonas.find(x => norm(x) === arg);
     if (!z) return send(chat, `Zonas disponibles: ${zonas.join(', ')}`);
-    await db.ref(`telegram/${uid}/zona`).set(z);
+    await db.ref(R(`telegram/${uid}/zona`)).set(z);
     return send(chat, `📍 Zona por defecto: ${z}`);
   }
 
   if (t === '/faltantes') {
-    const st = (await db.ref('stock').once('value')).val() || {};
+    const st = (await db.ref(R('stock')).once('value')).val() || {};
     const f = productos.filter(p => !(st[p] > 0));
     return send(chat, f.length ? `Sin stock (${f.length}):\n${f.join('\n')}` : '✅ No falta nada.');
   }
 
   if (t.startsWith('/stock')) {
     const arg = t.slice(6).trim();
-    const st = (await db.ref('stock').once('value')).val() || {};
+    const st = (await db.ref(R('stock')).once('value')).val() || {};
     if (!arg) {
       const l = productos.filter(p => st[p] > 0).sort().map(p => `${p}: ${fmt(st[p])}`);
       return send(chat, l.length ? `📦 Stock general:\n${l.join('\n')}` : 'No hay stock cargado.');
     }
     const z = zonas.find(x => norm(x) === arg);
     if (z) {
-      const zd = (await db.ref(`zonas/${z}`).once('value')).val() || {};
+      const zd = (await db.ref(R(`zonas/${z}`)).once('value')).val() || {};
       const l = Object.keys(zd).filter(p => zd[p] > 0).sort().map(p => `${p}: ${fmt(zd[p])}`);
       return send(chat, l.length ? `📍 ${z}:\n${l.join('\n')}` : `Sin stock en ${z}.`);
     }
     const r = buscar(arg, productos);
     if (!r.ok) return send(chat, r.opciones.length ? `¿Cuál? ${r.opciones.join(', ')}` : `❌ No encontré "${arg}".`);
-    const zs = (await db.ref('zonas').once('value')).val() || {};
+    const zs = (await db.ref(R('zonas')).once('value')).val() || {};
     const det = zonas.filter(x => zs[x] && zs[x][r.ok] > 0).map(x => `${x}: ${fmt(zs[x][r.ok])}`);
     return send(chat, `📦 ${r.ok}: ${fmt(st[r.ok] || 0)}${det.length ? '\n' + det.join('\n') : ''}`);
   }
@@ -123,9 +118,9 @@ async function procesar(msg) {
   if (!p) return send(chat, `⚠️ No entendí, ${nombre}. Probá "fernet 2" o "restar fernet 1/2".\n\n${AYUDA}`);
   const r = buscar(p.producto, productos);
   if (!r.ok) return send(chat, r.opciones.length ? `¿A cuál te referís? ${r.opciones.join(', ')}` : `❌ No encontré "${p.producto}".`);
-    const zdef = (await db.ref(`telegram/${uid}/zona`).once('value')).val();
+  const zdef = (await db.ref(R(`telegram/${uid}/zona`)).once('value')).val();
   const zona = p.zona || (zonas.includes(zdef) ? zdef : null);
-  
+
   try {
     const m = await mover(r.ok, zona, p.delta, nombre);
     const signo = m.aplicado >= 0 ? '+' : '−';
@@ -166,7 +161,6 @@ async function polling() { // solo para desarrollo local (sin URL pública)
 }
 
 (async () => {
-  await sembrar();
   if (PUBLIC_URL) {
     const r = await (await fetch(`${API}/setWebhook`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: `${PUBLIC_URL}/webhook`, secret_token: WEBHOOK_SECRET, allowed_updates: ['message'] }) })).json();
